@@ -6,13 +6,16 @@ load_dotenv()
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-class DataFile():
+
+class DataFile:
     def __init__(self, year: str, day: str):
         self.create_directory(year)
 
         cookie = {"session": os.environ["AOC_SESSION"]}
-        req = requests.get(f"https://adventofcode.com/{year}/day/{day}/input", cookies=cookie)
-        
+        req = requests.get(
+            f"https://adventofcode.com/{year}/day/{day}/input", cookies=cookie
+        )
+
         with open(os.path.join(here, f"./data/{year}/{day}.txt"), "w") as f:
             f.write(req.text)
 
