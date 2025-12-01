@@ -1,4 +1,4 @@
-from days.day1 import parse_line, solve, move
+from days.day1 import move, parse_line, solve
 
 input = """L68
 L30

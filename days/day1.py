@@ -10,7 +10,7 @@ def parse_line(line: str) -> list[int]:
 def move(line: str, position: int) -> tuple[int, int]:
     direction, steps = parse_line(line)
     zeroes = 0
-    for i in range(steps):
+    for _ in range(steps):
         position += direction
         position = position % 100
         if position == 0:

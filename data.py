@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+
 from data_file import DataFile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -7,7 +8,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def get_input(file: str) -> list[str]:
     """Read input file and return lines as a list of strings."""
-    with open(os.path.join(HERE, file), "r") as f:
+    with open(os.path.join(HERE, file)) as f:
         return [line.strip() for line in f.readlines()]
 
 

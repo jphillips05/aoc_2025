@@ -1,6 +1,7 @@
 import os
-from dotenv import load_dotenv
+
 import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -12,9 +13,7 @@ class DataFile:
         self.create_directory(year)
 
         cookie = {"session": os.environ["AOC_SESSION"]}
-        req = requests.get(
-            f"https://adventofcode.com/{year}/day/{day}/input", cookies=cookie
-        )
+        req = requests.get(f"https://adventofcode.com/{year}/day/{day}/input", cookies=cookie)
 
         with open(os.path.join(here, f"./data/{year}/{day}.txt"), "w") as f:
             f.write(req.text)
