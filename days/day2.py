@@ -43,6 +43,43 @@ def range_list(start: int, end: int) -> list[int]:
         return list(range(start, end - 1, -1))
 
 
+def has_repeated_pattern(id_str: str) -> bool:
+    """Check if an ID string contains a repeated pattern.
+
+    An ID is invalid if it can be broken into equal parts that are all the same.
+    For example, "123123123" is invalid because "123" is repeated 3 times.
+
+    Args:
+        id_str: The ID string to check
+
+    Returns:
+        True if the string contains a repeated pattern, False otherwise
+
+    Example:
+        >>> has_repeated_pattern("123123123")
+        True  # "123" repeated 3 times
+        >>> has_repeated_pattern("1234")
+        False  # no repeating pattern
+        >>> has_repeated_pattern("1111")
+        True  # "1" repeated 4 times
+    """
+    length = len(id_str)
+
+    # Check all possible pattern lengths (excluding trivial cases)
+    for pattern_len in range(1, length // 2 + 1):
+        if length % pattern_len != 0:
+            continue
+
+        pattern = id_str[:pattern_len]
+        num_repeats = length // pattern_len
+
+        # Check if the pattern repeats throughout the string
+        if pattern * num_repeats == id_str:
+            return True
+
+    return False
+
+
 def is_valid_id(id_num: int) -> bool:
     """Check if an ID is valid by comparing both halves of its string representation.
 
@@ -80,39 +117,53 @@ def is_valid_id(id_num: int) -> bool:
 
 
 def process_range(range_str: str) -> list[int]:
-    """Process a range string and return a list of invalid IDs.
+    """Process a range string and return a list of all numbers in that range.
 
-    Parses the range string, generates all numbers in that range, checks each
-    for validity, and collects the invalid ones.
+    Parses the range string and generates all numbers in that range.
 
     Args:
         range_str: A string like "1-5" or "10-20"
 
     Returns:
-        A list of invalid ID numbers from the range
+        A list of all numbers in the range (inclusive)
 
     Example:
+        >>> process_range("1-5")
+        [1, 2, 3, 4, 5]
         >>> process_range("1212-1214")
-        [1213, 1214]
-        >>> process_range("1212-1212")
-        []
+        [1212, 1213, 1214]
     """
     start, end = parse_range(range_str)
-    numbers = range_list(start, end)
-    invalid_ids = []
+    return range_list(start, end)
+
+
+def invalid_ids(numbers: list[int], check_repeating: bool = False) -> list[int]:
+    all_invalid_ids = []
 
     for num in numbers:
-        if not is_valid_id(num):
-            invalid_ids.append(num)
+        id_str = str(num)
+        is_invalid = False
 
-    return invalid_ids
+        # Check validity condition
+        if check_repeating:
+            # Invalid if it has a repeated pattern
+            is_invalid = has_repeated_pattern(id_str)
+        else:
+            # Invalid if halves are the same
+            is_invalid = not is_valid_id(id_str)
+
+        if is_invalid:
+            all_invalid_ids.append(num)
+    return all_invalid_ids
 
 
-def solve(input_lines: list[str]) -> int:
+def solve(input_lines: list[str], check_repeating: bool = False) -> int:
     """Process input lines and return the sum of all invalid IDs.
 
     Args:
         input_lines: List of range strings like ["1-5", "10-20"]
+        check_repeating: If True, check for repeated patterns
+        check_halves: If True, check if halves are the same (default True)
 
     Returns:
         The sum of all invalid IDs found across all ranges
@@ -125,8 +176,7 @@ def solve(input_lines: list[str]) -> int:
 
     for line in input_lines:
         if line.strip():  # Skip empty lines
-            invalid_ids = process_range(line.strip())
-            all_invalid_ids.extend(invalid_ids)
+            all_invalid_ids.extend(invalid_ids(process_range(line.strip()), check_repeating))
 
     return sum(all_invalid_ids)
 
@@ -136,7 +186,9 @@ def main():
 
     input_lines = get_input("data/2025/2.txt")
     total = solve(input_lines[0].split(","))
+    total_repeating = solve(input_lines[0].split(","), check_repeating=True)
     print(total)
+    print(total_repeating)
 
 
 if __name__ == "__main__":
