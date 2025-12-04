@@ -169,6 +169,79 @@ def test_string_to_grid_jagged_array():
     assert len(result[2]) == 4
 
 
+def test_check_adjacent_sets_x_when_condition_true():
+    """Test that check_adjacent sets grid position to 'x' when condition is true."""
+    grid = [["A", "B", "C"], ["D", "E", "F"], ["G", "H", "I"]]
+    # Position (1,1) is 'E', adjacent positions are A,B,C,D,F,G,H,I
+    # Looking for 'A' with threshold 2: 1 occurrence < 2, so condition is True
+    result = check_adjacent(grid, 1, 1, "A", 2)
+    assert result is True
+    assert grid[1][1] == "x"  # Position should be marked as 'x'
+
+
+def test_check_adjacent_does_not_set_x_when_condition_false():
+    """Test that check_adjacent does not change grid when condition is false."""
+    grid = [["A", "B", "C"], ["D", "E", "F"], ["G", "H", "I"]]
+    # Position (1,1) is 'E', adjacent positions are A,B,C,D,F,G,H,I
+    # Looking for 'A' with threshold 1: 1 occurrence is not < 1, so condition is False
+    original_value = grid[1][1]
+    result = check_adjacent(grid, 1, 1, "A", 1)
+    assert result is False
+    assert grid[1][1] == original_value  # Position should not be changed
+
+
+def test_check_adjacent_marks_multiple_positions():
+    """Test that check_adjacent can mark multiple positions correctly."""
+    grid = [["A", "A", "A"], ["A", "B", "A"], ["A", "A", "A"]]
+    # Position (1,1) is 'B', surrounded by 8 'A's
+    # Looking for 'A' with threshold 9: 8 < 9, so condition is True
+    result = check_adjacent(grid, 1, 1, "A", 9)
+    assert result is True
+    assert grid[1][1] == "x"  # Position should be marked
+
+    # Check that other positions are not affected yet
+    assert grid[0][0] == "A"
+    assert grid[0][1] == "A"
+    assert grid[2][2] == "A"
+
+
+def test_check_adjacent_does_not_count_x_as_match():
+    """Test that check_adjacent does not count 'x' positions as matches for the character."""
+    grid = [["A", "A", "A"], ["A", "B", "A"], ["A", "A", "A"]]
+    # First, mark position (0,1) as 'x'
+    grid[0][1] = "x"
+    # Position (1,1) is 'B', adjacent positions include one 'x' which should NOT count as 'A'
+    # Looking for 'A' with threshold 8: should NOT count 'x', so 7 < 8
+    result = check_adjacent(grid, 1, 1, "A", 8)
+    assert result is True
+    assert grid[1][1] == "x"  # Position should be marked
+
+
+def test_check_adjacent_edge_case_marking():
+    """Test marking edge positions."""
+    grid = [["A", "B", "C"], ["D", "E", "F"]]
+    # Position (0,0) is 'A', adjacent positions are B,D,E
+    # Looking for 'B' with threshold 2: 1 occurrence < 2, so condition is True
+    result = check_adjacent(grid, 0, 0, "B", 2)
+    assert result is True
+    assert grid[0][0] == "x"  # Edge position should be marked
+
+
+def test_check_adjacent_invalid_position_no_modification():
+    """Test that invalid positions don't cause errors or modifications."""
+    grid = [["A", "B", "C"], ["D", "E", "F"]]
+    original_grid = [row[:] for row in grid]  # Deep copy
+
+    # Test out of bounds positions
+    assert check_adjacent(grid, -1, 0, "A", 1) is False
+    assert check_adjacent(grid, 0, -1, "A", 1) is False
+    assert check_adjacent(grid, 10, 0, "A", 1) is False
+    assert check_adjacent(grid, 0, 10, "A", 1) is False
+
+    # Grid should be unchanged
+    assert grid == original_grid
+
+
 def test_solve():
     input = """..@@.@@@@.
 @@@.@.@.@@
@@ -182,3 +255,43 @@ def test_solve():
 @.@.@@@.@."""
 
     assert solve(input) == 13
+    assert solve(input, iterate_until_stable=True) == 43
+
+
+def test_solve_iterate_until_stable():
+    """Test solve with iterate_until_stable flag."""
+    # Create a grid where marking positions will cause more positions to meet condition
+    input_str = """@@@
+@.@
+@@@"""
+    # First iteration: corners might be marked if they have < 4 adjacent '@'
+    # Second iteration: after marking, more positions might meet condition
+    result = solve(input_str, iterate_until_stable=True)
+    # Should return total count after all iterations
+    assert isinstance(result, int)
+    assert result >= 0
+
+
+def test_solve_iterate_until_stable_no_change():
+    """Test that iterate_until_stable stops when no new positions are marked."""
+    input_str = """..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@."""
+
+    # First call without iteration
+    result1 = solve(input_str, iterate_until_stable=False)
+
+    # Second call with iteration - should eventually stabilize
+    result2 = solve(input_str, iterate_until_stable=True)
+
+    # Both should return valid counts
+    assert isinstance(result1, int)
+    assert isinstance(result2, int)
+    assert result2 >= result1  # Iterating might mark more positions

@@ -34,13 +34,64 @@ def string_to_grid(s: str, sep: str = "\n") -> list[list[str]]:
     return [list(line) for line in lines if line]
 
 
+def count_adjacent(grid: list[list[str]], row: int, col: int, char: str) -> int:
+    """Count adjacent positions matching a specific character.
+
+    Checks all 8 adjacent positions (up, down, left, right, and 4 diagonals)
+    around the given coordinate and returns the count of matching characters.
+    Handles jagged arrays (rows of different lengths).
+
+    Args:
+        grid: A grid represented as a list of lists of strings (may be jagged)
+        row: Row index (0-based)
+        col: Column index (0-based)
+        char: Character to search for in adjacent positions
+
+    Returns:
+        The count of adjacent positions matching the character
+
+    Example:
+        >>> grid = [["A", "B", "C"], ["D", "E", "F"], ["G", "H", "I"]]
+        >>> count_adjacent(grid, 1, 1, 'A')
+        1
+    """
+    if not grid or row < 0 or col < 0:
+        return 0
+
+    rows = len(grid)
+    if row >= rows or col >= len(grid[row]):
+        return 0
+
+    count = 0
+    directions = [
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+    ]
+
+    for dr, dc in directions:
+        new_row = row + dr
+        new_col = col + dc
+
+        if 0 <= new_row < rows and 0 <= new_col < len(grid[new_row]):
+            if grid[new_row][new_col] == char:
+                count += 1
+
+    return count
+
+
 def check_adjacent(grid: list[list[str]], row: int, col: int, char: str, n: int) -> bool:
     """Check adjacent positions for a specific character.
 
     Checks all 8 adjacent positions (up, down, left, right, and 4 diagonals)
     around the given coordinate. Returns True if there are less than n
-    occurrences of the specified character. Handles jagged arrays (rows of
-    different lengths).
+    occurrences of the specified character. Marks the position as 'x' if condition is met.
+    Handles jagged arrays (rows of different lengths).
 
     Args:
         grid: A grid represented as a list of lists of strings (may be jagged)
@@ -53,7 +104,7 @@ def check_adjacent(grid: list[list[str]], row: int, col: int, char: str, n: int)
         True if there are less than n occurrences of char in adjacent positions
 
     Example:
-        >>> grid = ["ABC", "DEF", "GHI"]
+        >>> grid = [["A", "B", "C"], ["D", "E", "F"], ["G", "H", "I"]]
         >>> check_adjacent(grid, 1, 1, 'A', 2)
         True
         >>> check_adjacent(grid, 0, 0, 'B', 1)
@@ -63,60 +114,55 @@ def check_adjacent(grid: list[list[str]], row: int, col: int, char: str, n: int)
         return False
 
     rows = len(grid)
-    if row >= rows:
+    if row >= rows or col >= len(grid[row]):
         return False
 
-    # Check if the current position is valid (handles jagged arrays)
-    if col >= len(grid[row]):
-        return False
-
-    count = 0
-    # Check all 8 adjacent positions
-    directions = [
-        (-1, -1),
-        (-1, 0),
-        (-1, 1),  # Top row
-        (0, -1),
-        (0, 1),  # Middle row (left, right)
-        (1, -1),
-        (1, 0),
-        (1, 1),  # Bottom row
-    ]
-
-    for dr, dc in directions:
-        new_row = row + dr
-        new_col = col + dc
-
-        # Check bounds (handles jagged arrays by checking each row's length)
-        if 0 <= new_row < rows and 0 <= new_col < len(grid[new_row]):
-            if grid[new_row][new_col] == char:
-                count += 1
-
-    return count < n
+    count = count_adjacent(grid, row, col, char)
+    result = count < n
+    if result:
+        grid[row][col] = "x"
+    return result
 
 
-def solve(input_str: str) -> int:
+def solve(input_str: str, iterate_until_stable: bool = False) -> int:
     """Solve the puzzle by checking adjacent positions in the grid.
 
     Converts the input string to a grid and counts '@' positions that have
-    less than 4 adjacent '@' characters.
+    less than 4 adjacent '@' characters. Marks matching positions as 'x'.
 
     Args:
         input_str: Input string representing the grid
+        iterate_until_stable: If True, continue iterating until no new positions
+            are marked in an iteration
 
     Returns:
         The count of '@' positions with less than 4 adjacent '@' characters
     """
     grid = string_to_grid(input_str)
-    count = 0
+    total_count = 0
 
-    for row in range(len(grid)):
-        for col in range(len(grid[row])):
-            # Check if position is '@' and has less than 4 adjacent '@' characters
-            if grid[row][col] == "@" and check_adjacent(grid, row, col, "@", 4):
-                count += 1
+    while True:
+        # Collect positions to mark first (don't modify grid during check)
+        positions_to_mark = []
+        for row in range(len(grid)):
+            for col in range(len(grid[row])):
+                if grid[row][col] == "@":
+                    # Use count_adjacent helper to check if position should be marked
+                    if count_adjacent(grid, row, col, "@") < 4:
+                        positions_to_mark.append((row, col))
 
-    return count
+        # Mark all positions at once
+        for row, col in positions_to_mark:
+            grid[row][col] = "x"
+
+        iteration_count = len(positions_to_mark)
+        total_count += iteration_count
+
+        # If not iterating until stable, or no new positions were marked, we're done
+        if not iterate_until_stable or iteration_count == 0:
+            break
+
+    return total_count
 
 
 def main():
@@ -124,7 +170,9 @@ def main():
 
     input_str = "\n".join(get_input("data/2025/4.txt"))
     result = solve(input_str)
+    result_loop = solve(input_str, iterate_until_stable=True)
     print(result)
+    print(result_loop)
 
 
 if __name__ == "__main__":
