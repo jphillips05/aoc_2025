@@ -110,7 +110,7 @@ def solve(input_lines: str) -> int:
     Returns:
         The sum of results from applying operations to each column
     """
-    grid = string_to_grid_by_row_and_spaces(input_lines)
+    grid = string_to_grid_by_row_and_spaces(input_lines, strip=False)
 
     if not grid or len(grid) < 2:
         return 0
