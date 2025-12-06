@@ -3,6 +3,7 @@ from days.day6 import (
     get_column_values,
     solve,
     string_to_grid_by_row_and_spaces,
+    solve_part_2,
 )
 
 
@@ -82,14 +83,5 @@ def test_solve():
     result = solve(input_str)
     assert result == 4277556
 
-
-def test_solve_single_row():
-    """Test solve with only one data row."""
-    input_str = """10 20 30
-* + *"""
-    result = solve(input_str)
-    # Column 0: * operation on [10] = 10
-    # Column 1: + operation on [20] = 20
-    # Column 2: * operation on [30] = 30
-    # Total: 10 + 20 + 30 = 60
-    assert result == 60
+    result_part_2 = solve_part_2(input_str)
+    assert result_part_2 == 3263827

@@ -1,7 +1,9 @@
 import re
 
 
-def string_to_grid_by_row_and_spaces(s: str) -> list[list[str]]:
+def string_to_grid_by_row_and_spaces(
+    s: str, split_by: re.Pattern[str] = re.compile(r" +"), strip: bool = True
+) -> list[list[str]]:
     """Convert a string to a grid by splitting on newlines, then spaces in each row.
 
     First splits by newlines to get rows, then splits each row by whitespace.
@@ -30,7 +32,7 @@ def string_to_grid_by_row_and_spaces(s: str) -> list[list[str]]:
     for line in lines:
         if line.strip():  # Skip empty lines
             # Split by one or more spaces
-            row = re.split(r"\s+", line.strip())
+            row = re.split(split_by, line if strip else line.strip())
             grid.append(row)
 
     return grid
@@ -135,11 +137,70 @@ def solve(input_lines: str) -> int:
     return total
 
 
+def solve_part_2(input_lines: str) -> int:
+    """Solve the puzzle for part 2."""
+    grid = string_to_grid_by_row_and_spaces(input_lines, split_by=re.compile(r""))
+    columns = len(grid[0])
+    array = []
+    total = 0
+
+    # Process columns from right to left (top right to bottom left)
+    # Accumulate numbers across columns until we hit an operation
+    collected_numbers = []  # Collect all integers across columns
+    current_number_str = ""  # Build number string from consecutive digits
+
+    for col in range(columns - 1, -1, -1):
+        # Walk rows from top to bottom for this column
+        for _, row in enumerate(grid):
+            if col >= len(row):
+                # Skip if column doesn't exist in this row (jagged array)
+                continue
+
+            cell = row[col]
+
+            if cell.isdigit():
+                # Add digit to current number string
+                current_number_str += cell
+            elif cell == " " or cell == "":
+                # Space or empty - finish current number if we have one
+                if current_number_str:
+                    collected_numbers.append(int(current_number_str))
+                    current_number_str = ""
+                # Continue to next row
+            elif cell == "+" or cell == "*":
+                # Found operation - finish current number if we have one
+                if current_number_str:
+                    collected_numbers.append(int(current_number_str))
+                    current_number_str = ""
+
+                # Group all collected numbers with this operation
+                if collected_numbers:
+                    operation = cell
+                    array.append((collected_numbers.copy(), operation))
+                    collected_numbers = []  # Reset for next operation
+                # Continue to next column (operation processed)
+                break
+
+    # Process the array: each tuple contains (list_of_integers, operation)
+    while array:
+        item = array.pop(0)
+        if isinstance(item, tuple):
+            numbers, operation = item
+            print(numbers, operation)
+            result = apply_operation(operation, numbers)
+            if result is not None:
+                total += result
+    print(array)
+    return total
+
+
 def main():
     from data import get_input_string
 
     input_lines = get_input_string("data/2025/6.txt")
     result = solve(input_lines)
+    result_part_2 = solve_part_2(input_lines)
+    print(result_part_2)
     print(result)
 
 
