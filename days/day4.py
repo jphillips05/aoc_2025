@@ -1,13 +1,16 @@
-def string_to_grid(s: str, sep: str = "\n") -> list[list[str]]:
-    """Convert a string into a grid by splitting on a separator character.
+import re
 
-    Splits the input string by the separator character and returns a list
-    of lists of strings representing the grid rows. Each row is a list of
+
+def string_to_grid(s: str, sep: str | re.Pattern[str] = "\n") -> list[list[str]]:
+    """Convert a string into a grid by splitting on a separator character or regex.
+
+    Splits the input string by the separator (string or regex pattern) and returns
+    a list of lists of strings representing the grid rows. Each row is a list of
     characters. Handles different line ending formats (\\n, \\r\\n, \\r).
 
     Args:
         s: Input string to convert to grid (may include line endings)
-        sep: Separator character to split on (default: newline)
+        sep: Separator string or regex pattern to split on (default: newline)
 
     Returns:
         A list of lists of strings representing grid rows (jagged array)
@@ -17,6 +20,8 @@ def string_to_grid(s: str, sep: str = "\n") -> list[list[str]]:
         [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'I']]
         >>> string_to_grid("A,B,C", sep=",")
         [['A'], ['B'], ['C']]
+        >>> string_to_grid("A  B  C", sep=re.compile(r"\\s+"))
+        [['A'], ['B'], ['C']]
     """
     if not s:
         return []
@@ -24,8 +29,11 @@ def string_to_grid(s: str, sep: str = "\n") -> list[list[str]]:
     # Normalize line endings - replace \r\n with \n, then \r with \n
     normalized = s.replace("\r\n", "\n").replace("\r", "\n")
 
-    # Split on the separator (or newline if default)
-    if sep == "\n":
+    # Split on the separator (string or regex pattern)
+    if isinstance(sep, re.Pattern):
+        # Use regex to split
+        lines = sep.split(normalized)
+    elif sep == "\n":
         lines = normalized.split("\n")
     else:
         lines = normalized.split(sep)

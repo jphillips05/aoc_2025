@@ -159,6 +159,26 @@ def test_check_adjacent_jagged_array_edge():
     assert check_adjacent(grid, 0, 2, "D", 2) is True
 
 
+def test_string_to_grid_regex_separator():
+    """Test string_to_grid with regex pattern separator."""
+    import re
+
+    s = "A  B  C\nD   E   F"
+    # Split on one or more spaces
+    grid = string_to_grid(s, sep=re.compile(r"\s+"))
+    # Should split each line on spaces, creating separate cells
+    assert grid == [["A"], ["B"], ["C"], ["D"], ["E"], ["F"]]
+
+
+def test_string_to_grid_regex_multiple_spaces():
+    """Test string_to_grid with regex for multiple spaces."""
+    import re
+
+    s = "A    B    C"
+    grid = string_to_grid(s, sep=re.compile(r"\s+"))
+    assert grid == [["A"], ["B"], ["C"]]
+
+
 def test_string_to_grid_jagged_array():
     """Test converting string to jagged grid."""
     s = "ABC\nDE\nFGHI"
